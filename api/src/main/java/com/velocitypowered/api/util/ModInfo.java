@@ -79,6 +79,8 @@ public final class ModInfo {
     public Mod(String id, String version) {
       this.id = Preconditions.checkNotNull(id, "id");
       this.version = Preconditions.checkNotNull(version, "version");
+      Preconditions.checkArgument(id.length() < 128, "mod id is too long");
+      Preconditions.checkArgument(version.length() < 128, "mod version is too long");
     }
 
     public String getId() {
