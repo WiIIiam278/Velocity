@@ -21,9 +21,22 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import com.velocitypowered.proxy.protocol.util.DeferredByteBufHolder;
 import io.netty.buffer.ByteBuf;
 
+/**
+ * The {@code RegistrySyncPacket} class is responsible for synchronizing registry data
+ * between the server and client in Minecraft.
+ *
+ * <p>This packet is used to ensure that the client has the same registry information as
+ * the server, covering aspects like blocks, items, entities, and other game elements
+ * that are part of Minecraft's internal registries.</p>
+ *
+ * <p>It extends the {@link DeferredByteBufHolder} class to handle deferred buffering
+ * operations for potentially large sets of registry data, which may include
+ * complex serialization processes.</p>
+ */
 public class RegistrySyncPacket extends DeferredByteBufHolder implements MinecraftPacket {
 
   public RegistrySyncPacket() {
@@ -46,5 +59,10 @@ public class RegistrySyncPacket extends DeferredByteBufHolder implements Minecra
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
+  }
+
+  @Override
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+    return content().readableBytes();
   }
 }

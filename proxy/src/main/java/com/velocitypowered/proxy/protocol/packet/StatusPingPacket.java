@@ -24,6 +24,10 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 
+/**
+ * Represents a status ping packet sent by the client to the server, which is used to measure the latency
+ * between the client and server.
+ */
 public class StatusPingPacket implements MinecraftPacket {
 
   private long randomId;
@@ -44,12 +48,12 @@ public class StatusPingPacket implements MinecraftPacket {
   }
 
   @Override
-  public int expectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
+  public int decodeExpectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
     return 8;
   }
 
   @Override
-  public int expectedMinLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
+  public int decodeExpectedMinLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
     return 8;
   }
 }

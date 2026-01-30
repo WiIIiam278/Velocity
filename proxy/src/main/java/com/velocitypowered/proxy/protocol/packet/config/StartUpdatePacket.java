@@ -23,6 +23,16 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
+/**
+ * The {@code StartUpdatePacket} class represents a packet that signals the
+ * start of an update process in the Minecraft protocol.
+ *
+ * <p>This packet may be used to notify the client or server that a certain update
+ * process, such as data synchronization or gameplay changes, is about to begin.</p>
+ *
+ * <p>Its specific use depends on the version and context of the update,
+ * typically handled in the Minecraft networking layer.</p>
+ */
 public class StartUpdatePacket implements MinecraftPacket {
   public static final StartUpdatePacket INSTANCE = new StartUpdatePacket();
 
@@ -40,8 +50,8 @@ public class StartUpdatePacket implements MinecraftPacket {
   }
 
   @Override
-  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction,
-                               ProtocolVersion version) {
+  public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction,
+                                     ProtocolVersion version) {
     return 0;
   }
 

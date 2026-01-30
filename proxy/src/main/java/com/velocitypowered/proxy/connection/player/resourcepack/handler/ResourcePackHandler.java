@@ -111,13 +111,14 @@ public abstract sealed class ResourcePackHandler
     }
     request.setRequired(queued.getShouldForce());
     request.setPrompt(queued.getPrompt() == null ? null :
-            new ComponentHolder(player.getProtocolVersion(), queued.getPrompt()));
+            new ComponentHolder(player.getProtocolVersion(), player.translateMessage(queued.getPrompt())));
 
     player.getConnection().write(request);
   }
 
   /**
    * Processes a client response to a sent resource-pack.
+   *
    * <p>Cases in which no action will be taken:</p>
    * <ul>
    *

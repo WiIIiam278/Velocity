@@ -22,10 +22,19 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
-
 import java.util.Map;
 
+/**
+ * The {@code TagsUpdatePacket} class represents a packet sent to update the tags
+ * used by the Minecraft client. Tags are used in various parts of the game to group
+ * blocks, items, entities, and other objects under common categories.
+ *
+ * <p>This packet is typically sent to clients when they join a server or when
+ * the server needs to update the list of tags for the client, ensuring that
+ * the client has the most up-to-date tag information.</p>
+ */
 public class TagsUpdatePacket implements MinecraftPacket {
 
   private Map<String, Map<String, int[]>> tags;
@@ -78,5 +87,23 @@ public class TagsUpdatePacket implements MinecraftPacket {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
+  }
+
+  @Override
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+    int size = ProtocolUtils.varIntBytes(tags.size());
+    for (Map.Entry<String, Map<String, int[]>> entry : tags.entrySet()) {
+      size += ProtocolUtils.stringSizeHint(entry.getKey());
+      size += ProtocolUtils.varIntBytes(entry.getValue().size());
+      for (Map.Entry<String, int[]> innerEntry : entry.getValue().entrySet()) {
+        size += ProtocolUtils.stringSizeHint(innerEntry.getKey());
+        size += ProtocolUtils.varIntBytes(innerEntry.getValue().length);
+        for (int innerEntryValue : innerEntry.getValue()) {
+          size += ProtocolUtils.varIntBytes(innerEntryValue);
+        }
+      }
+    }
+
+    return size;
   }
 }

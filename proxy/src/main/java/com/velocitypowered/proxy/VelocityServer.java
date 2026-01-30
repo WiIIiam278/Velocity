@@ -24,6 +24,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyPreShutdownEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -81,7 +82,6 @@ import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -104,8 +104,8 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationStore;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bstats.MetricsBase;
@@ -119,7 +119,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public class VelocityServer implements ProxyServer, ForwardingAudience {
 
-  public static final String VELOCITY_URL = "https://velocitypowered.com";
+  public static final String VELOCITY_URL = "https://papermc.io/software/velocity";
 
   private static final Logger logger = LogManager.getLogger(VelocityServer.class);
   public static final Gson GENERAL_GSON = new GsonBuilder()
@@ -150,6 +150,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       )
       .registerTypeHierarchyAdapter(Favicon.class, FaviconSerializer.INSTANCE)
       .create();
+  private static final int PRE_SHUTDOWN_TIMEOUT =
+            Integer.getInteger("velocity.pre-shutdown-timeout", 10);
 
   private final ConnectionManager cm;
   private final ProxyOptions options;
@@ -216,7 +218,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     ProxyVersion version = getVersion();
     PluginDescription description = new VelocityPluginDescription(
         "velocity", version.getName(), version.getVersion(), "The Velocity proxy",
-        VELOCITY_URL, ImmutableList.of(version.getVendor()), Collections.emptyList(), null);
+            version.getName().equals("Velocity") ? VELOCITY_URL : null,
+            ImmutableList.of(version.getVendor()), Collections.emptyList(), null);
     VelocityPluginContainer container = new VelocityPluginContainer(description);
     container.setInstance(VelocityVirtualPlugin.INSTANCE);
     return container;
@@ -237,8 +240,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     logger.info("Booting up {} {}...", getVersion().getName(), getVersion().getVersion());
     console.setupStreams();
     pluginManager.registerPlugin(this.createVirtualPlugin());
-
-    registerTranslations();
 
     // Yes, you're reading that correctly. We're generating a 1024-bit RSA keypair. Sounds
     // dangerous, right? We're well within the realm of factoring such a key...
@@ -287,6 +288,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     new SendCommand(this).register();
 
     this.doStartupConfigLoad();
+
+    registerTranslations();
 
     for (ServerInfo cliServer : options.getServers()) {
       servers.register(cliServer);
@@ -338,8 +341,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void registerTranslations() {
-    final TranslationStore.StringBased<MessageFormat> translationRegistry =
-            TranslationStore.messageFormat(Key.key("velocity", "translations"));
+    final MiniMessageTranslationStore translationRegistry =
+            MiniMessageTranslationStore.create(Key.key("velocity", "translations"));
     translationRegistry.defaultLocale(Locale.US);
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
@@ -578,6 +581,20 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       // done first to refuse new connections
       cm.shutdown();
 
+      try {
+        eventManager.fire(new ProxyPreShutdownEvent())
+                .toCompletableFuture()
+                .get(PRE_SHUTDOWN_TIMEOUT, TimeUnit.SECONDS);
+      } catch (TimeoutException ignored) {
+        logger.warn("Your plugins took over {} seconds during pre shutdown.",
+                PRE_SHUTDOWN_TIMEOUT);
+      } catch (ExecutionException ee) {
+        logger.error("Exception in ProxyPreShutdownEvent handler; continuing shutdown.", ee);
+      } catch (InterruptedException ignored) {
+        Thread.currentThread().interrupt();
+        logger.warn("Interrupted while waiting for ProxyPreShutdownEvent; continuing shutdown.");
+      }
+
       ImmutableList<ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
       for (ConnectedPlayer player : players) {
         player.disconnect(reason);
@@ -633,7 +650,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   /**
-   * Calls {@link #shutdown(boolean, Component)} with the default reason "Proxy shutting down."
+   * Calls {@link #shutdown(boolean, Component)} with the default reason "Proxy shutting down.".
    *
    * @param explicitExit whether the user explicitly shut down the proxy
    */
@@ -817,7 +834,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   public VelocityChannelRegistrar getChannelRegistrar() {
     return channelRegistrar;
   }
-  
+
   @Override
   public boolean isShuttingDown() {
     return shutdownInProgress.get();

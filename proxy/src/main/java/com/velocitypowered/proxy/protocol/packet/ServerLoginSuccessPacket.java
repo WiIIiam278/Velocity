@@ -23,12 +23,17 @@ import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import com.velocitypowered.proxy.util.VelocityProperties;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.UUID;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+/**
+ * Represents the packet sent from the server to the client to indicate successful login.
+ * This packet contains the player's UUID, username, and properties associated with their profile.
+ */
 public class ServerLoginSuccessPacket implements MinecraftPacket {
 
   private @Nullable UUID uuid;
@@ -37,6 +42,12 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
   private static final boolean strictErrorHandling = VelocityProperties
           .readBoolean("velocity.strictErrorHandling", true);
 
+  /**
+   * Gets the player's UUID from the login success packet.
+   *
+   * @return the player's UUID
+   * @throws IllegalStateException if the UUID is not specified
+   */
   public UUID getUuid() {
     if (uuid == null) {
       throw new IllegalStateException("No UUID specified!");
@@ -48,6 +59,12 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     this.uuid = uuid;
   }
 
+  /**
+   * Gets the player's username from the login success packet.
+   *
+   * @return the player's username
+   * @throws IllegalStateException if the username is not specified
+   */
   public String getUsername() {
     if (username == null) {
       throw new IllegalStateException("No username specified!");
@@ -131,5 +148,12 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
   @Override
   public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
+  }
+
+  @Override
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+    // We could compute an exact size, but 4KiB ought to be enough to encode all reasonable
+    // sizes of this packet.
+    return 4 * 1024;
   }
 }

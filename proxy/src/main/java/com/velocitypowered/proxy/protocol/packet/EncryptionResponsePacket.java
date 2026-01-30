@@ -26,10 +26,18 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import com.velocitypowered.proxy.util.except.QuietDecoderException;
 import io.netty.buffer.ByteBuf;
+import java.util.Arrays;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.Arrays;
-
+/**
+ * Represents the encryption response packet in Minecraft, which is sent by the client
+ * during the encryption handshake process. This packet contains the shared secret
+ * and verifies the token used to establish secure communication between the client
+ * and the server.
+ *
+ * <p>The packet structure varies depending on the Minecraft protocol version, with additional
+ * fields such as a salt being present in versions 1.19 and above.</p>
+ */
 public class EncryptionResponsePacket implements MinecraftPacket {
 
   private static final QuietDecoderException NO_SALT = new QuietDecoderException(
@@ -47,6 +55,13 @@ public class EncryptionResponsePacket implements MinecraftPacket {
     return verifyToken.clone();
   }
 
+  /**
+   * Retrieves the salt used in the encryption response. The salt is introduced in
+   * Minecraft version 1.19 and is optional in certain protocol versions.
+   *
+   * @return the salt used in the encryption response
+   * @throws QuietDecoderException if the salt is not present
+   */
   public long getSalt() {
     if (salt == null) {
       throw NO_SALT;
@@ -107,7 +122,7 @@ public class EncryptionResponsePacket implements MinecraftPacket {
   }
 
   @Override
-  public int expectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
+  public int decodeExpectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
     // It turns out these come out to the same length, whether we're talking >=1.8 or not.
     // The length prefix always winds up being 2 bytes.
     int base = 256 + 2 + 2;
@@ -123,8 +138,8 @@ public class EncryptionResponsePacket implements MinecraftPacket {
   }
 
   @Override
-  public int expectedMinLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
-    int base = expectedMaxLength(buf, direction, version);
+  public int decodeExpectedMinLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
+    int base = decodeExpectedMaxLength(buf, direction, version);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19)) {
       // These are "optional"
       base -= 128 + 8;

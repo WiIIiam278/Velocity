@@ -47,7 +47,16 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
+/**
+ * The {@code ArgumentPropertyRegistry} is responsible for managing the registration and
+ * retrieval of argument properties used in command parsing and execution.
+ *
+ * <p>This class functions as a registry, allowing different argument properties to be registered
+ * and later retrieved or used when processing commands within the system. The properties
+ * might be tied to argument types, validation rules, or transformations.</p>
+ */
 public class ArgumentPropertyRegistry {
 
   private ArgumentPropertyRegistry() {
@@ -87,9 +96,6 @@ public class ArgumentPropertyRegistry {
     ArgumentIdentifier identifier = readIdentifier(buf, protocolVersion);
 
     ArgumentPropertySerializer<?> serializer = byIdentifier.get(identifier);
-    if (serializer == null) {
-      throw new IllegalArgumentException("Argument type identifier " + identifier + " unknown.");
-    }
     Object result = serializer.deserialize(buf, protocolVersion);
 
     if (result instanceof ArgumentType) {
@@ -146,7 +152,6 @@ public class ArgumentPropertyRegistry {
     } else {
       ProtocolUtils.writeString(buf, identifier.getIdentifier());
     }
-
   }
 
   /**
@@ -156,7 +161,7 @@ public class ArgumentPropertyRegistry {
    * @param protocolVersion the protocol version to use
    * @return the identifier read from the buffer
    */
-  public static ArgumentIdentifier readIdentifier(ByteBuf buf, ProtocolVersion protocolVersion) {
+  public static @NotNull ArgumentIdentifier readIdentifier(ByteBuf buf, ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(MINECRAFT_1_19)) {
       int id = ProtocolUtils.readVarInt(buf);
       for (ArgumentIdentifier i : byIdentifier.keySet()) {
@@ -173,8 +178,8 @@ public class ArgumentPropertyRegistry {
           return i;
         }
       }
+      throw new IllegalArgumentException("Argument type identifier " + identifier + " unknown.");
     }
-    return null;
   }
 
   static {
@@ -273,7 +278,7 @@ public class ArgumentPropertyRegistry {
     empty(id("minecraft:heightmap", mapSet(MINECRAFT_1_21_6, 51), mapSet(MINECRAFT_1_21_5, 50), mapSet(MINECRAFT_1_20_3, 49),
         mapSet(MINECRAFT_1_19_4, 47))); // 1.19.4
 
-    empty(id("minecraft:uuid", mapSet(MINECRAFT_1_21_6, 56), mapSet(MINECRAFT_1_21_5, 54),mapSet(MINECRAFT_1_20_5, 53), mapSet(MINECRAFT_1_20_3, 48),
+    empty(id("minecraft:uuid", mapSet(MINECRAFT_1_21_6, 56), mapSet(MINECRAFT_1_21_5, 54), mapSet(MINECRAFT_1_20_5, 53), mapSet(MINECRAFT_1_20_3, 48),
         mapSet(MINECRAFT_1_19_4, 48), mapSet(MINECRAFT_1_19, 47))); // added in 1.16
 
     empty(id("minecraft:loot_table", mapSet(MINECRAFT_1_21_6, 52), mapSet(MINECRAFT_1_21_5, 51), mapSet(MINECRAFT_1_20_5, 50)));
