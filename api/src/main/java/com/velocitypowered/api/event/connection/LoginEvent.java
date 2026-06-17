@@ -22,57 +22,57 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @AwaitingEvent
 public final class LoginEvent implements ResultedEvent<ResultedEvent.ComponentResult> {
 
-    private final Player player;
-    private final String serverIdHash;
-    private ComponentResult result;
+  private final Player player;
+  private final String serverIdHash;
+  private ComponentResult result;
 
-    @Deprecated(forRemoval = true)
-    public LoginEvent(Player player) {
-        this(player, null);
-    }
+  @Deprecated(forRemoval = true)
+  public LoginEvent(Player player) {
+    this(player, null);
+  }
 
-    /**
-     * Constructs a new {@link LoginEvent}.
-     *
-     * @param player the player who has completed authentication
-     * @param serverIdHash the server ID hash sent to Mojang for authentication,
-     *                     or {@code null} if the connection is in offline-mode
-     */
-    public LoginEvent(Player player, @Nullable String serverIdHash) {
-        this.player = Preconditions.checkNotNull(player, "player");
-        this.serverIdHash = serverIdHash;
-        this.result = ComponentResult.allowed();
-    }
+  /**
+   * Constructs a new {@link LoginEvent}.
+   *
+   * @param player the player who has completed authentication
+   * @param serverIdHash the server ID hash sent to Mojang for authentication, or {@code null} if the
+   *     connection is in offline-mode
+   */
+  public LoginEvent(Player player, @Nullable String serverIdHash) {
+    this.player = Preconditions.checkNotNull(player, "player");
+    this.serverIdHash = serverIdHash;
+    this.result = ComponentResult.allowed();
+  }
 
-    public Player getPlayer() {
-        return player;
-    }
+  public Player getPlayer() {
+    return player;
+  }
 
-    /**
-     * Returns the server ID hash that was sent to Mojang to authenticate the player.
-     * If the connection was in offline-mode, this returns {@code null}.
-     *
-     * @return the server ID hash that was sent to Mojang to authenticate the player
-     */
-    public @Nullable String getServerIdHash() {
-        return serverIdHash;
-    }
+  /**
+   * Returns the server ID hash that was sent to Mojang to authenticate the player. If the connection
+   * was in offline-mode, this returns {@code null}.
+   *
+   * @return the server ID hash that was sent to Mojang to authenticate the player
+   */
+  public @Nullable String getServerIdHash() {
+    return serverIdHash;
+  }
 
-    @Override
-    public ComponentResult getResult() {
-        return result;
-    }
+  @Override
+  public ComponentResult getResult() {
+    return result;
+  }
 
-    @Override
-    public void setResult(ComponentResult result) {
-        this.result = Preconditions.checkNotNull(result, "result");
-    }
+  @Override
+  public void setResult(ComponentResult result) {
+    this.result = Preconditions.checkNotNull(result, "result");
+  }
 
-    @Override
-    public String toString() {
-        return "LoginEvent{"
-                + "player=" + player
-                + ", result=" + result
-                + '}';
-    }
+  @Override
+  public String toString() {
+    return "LoginEvent{"
+        + "player=" + player
+        + ", result=" + result
+        + '}';
+  }
 }
